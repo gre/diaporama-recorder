@@ -1,0 +1,23 @@
+{
+  "name": "diaporama-recorder",
+  "version": "1.0.0",
+  "description": "Client side library to record a diaporama and obtain a stream of frames",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:glslio/diaporama-recorder.git"
+  },
+  "keywords": [
+    "diaporama"
+  ],
+  "author": "Gaëtan Renaudeau",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/glslio/diaporama-recorder/issues"
+  },
+  "homepage": "https://github.com/glslio/diaporama-recorder",
+  "dependencies": {
+    "diaporama": "^1.1.10",
+    "rx": "^2.4.0"
+  }
+}

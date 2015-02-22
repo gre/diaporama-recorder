@@ -26,6 +26,8 @@ function DiaporamaRecorder (json, options) {
   var load = new Rx.BehaviorSubject();
   diaporama.once("load", load.onCompleted.bind(load));
 
+  this.abortion = new Rx.Subject();
+
   this.container = container;
   this.diaporama = diaporama;
   this.load = load;
@@ -40,6 +42,10 @@ DiaporamaRecorder.prototype = {
   frameFormat: "image/png",
   frameQuality: 1,
 
+  abort: function (err) {
+    this.abortion.onError(err || new Error("user aborted."));
+  },
+
   // Methods
   record: function () {
     var container = this.container;
@@ -50,6 +56,7 @@ DiaporamaRecorder.prototype = {
     var frameFormat = this.frameFormat;
     var frameQuality = this.frameQuality;
     var frames = this.nbFrames;
+    var abortion = this.abortion;
 
     var recordCanvas = document.createElement("canvas");
     recordCanvas.width = width;
@@ -63,7 +70,7 @@ DiaporamaRecorder.prototype = {
         diaporama.currentTime = i * 1000 / fps;
         diaporama.renderNow();
 
-        var child = container.children[0]
+        var child = container.children[0];
         ctx.fillRect(0, 0, width, height);
         if (child) {
           ctx.drawImage(child, 0, 0);
@@ -72,15 +79,15 @@ DiaporamaRecorder.prototype = {
         extractFromCanvas(recordCanvas, function (data) {
           observer.onNext(data);
           observer.onCompleted();
-        }, frameFormat, frameQuality)
+        }, frameFormat, frameQuality);
       });
     }
 
     return this.load.concatMap(function () {
-      d = (diaporama);
       return Rx.Observable
         .range(0, frames, Rx.Scheduler.timeout)
-        .concatMap(captureFrame);
+        .concatMap(captureFrame)
+        .merge(abortion);
     });
   }
 };

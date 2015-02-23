@@ -39,7 +39,7 @@ DiaporamaRecorder.prototype = {
   // Defaults that will be inherited by prototype
   width: 800,
   height: 600,
-  frameFormat: "image/png",
+  frameFormat: "image/jpeg",
   frameQuality: 1,
 
   abort: function (err) {
@@ -83,11 +83,16 @@ DiaporamaRecorder.prototype = {
       });
     }
 
-    return this.load.concatMap(function () {
+    var frameStream = this.load.concatMap(function () {
       return Rx.Observable
         .range(0, frames, Rx.Scheduler.timeout)
         .concatMap(captureFrame)
-        .merge(abortion);
+        .takeUntil(abortion);
+    });
+
+    return Rx.Observable.create(function (observer) {
+      abortion.subscribe(observer);
+      frameStream.subscribe(observer);
     });
   }
 };

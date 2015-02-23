@@ -1,6 +1,6 @@
 {
   "name": "diaporama-recorder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Client side library to record a diaporama and obtain a stream of frames",
   "main": "index.js",
   "repository": {

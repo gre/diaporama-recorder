@@ -2,7 +2,8 @@
   "name": "diaporama-recorder",
   "version": "1.0.2",
   "description": "Client side library to record a diaporama and obtain a stream of frames",
-  "main": "index.js",
+  "browser": "src/DiaporamaRecorder.js",
+  "main": "server/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:glslio/diaporama-recorder.git"
@@ -18,6 +19,9 @@
   "homepage": "https://github.com/glslio/diaporama-recorder",
   "dependencies": {
     "diaporama": "^1.1.10",
-    "rx": "^2.4.0"
+    "fluent-ffmpeg": "^2.0.0-rc3",
+    "q": "^1.2.0",
+    "rx": "^2.4.0",
+    "tmp": "0.0.24"
   }
 }

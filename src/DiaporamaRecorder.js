@@ -77,7 +77,7 @@ DiaporamaRecorder.prototype = {
         }
 
         extractFromCanvas(recordCanvas, function (data) {
-          observer.onNext(data);
+          observer.onNext({ id: i, data: data });
           observer.onCompleted();
         }, frameFormat, frameQuality);
       });

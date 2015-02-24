@@ -1,5 +1,6 @@
 var Diaporama = require("diaporama");
 var Rx = require("rx");
+var common = require("./common");
 
 function extractFromCanvas (canvas, cb, type, quality) {
   // Currently using toDataURL. in the future, might be replaced with toBlob
@@ -37,8 +38,6 @@ function DiaporamaRecorder (json, options) {
 
 DiaporamaRecorder.prototype = {
   // Defaults that will be inherited by prototype
-  width: 800,
-  height: 600,
   frameFormat: "image/jpeg",
   frameQuality: 1,
 
@@ -70,6 +69,8 @@ DiaporamaRecorder.prototype = {
         diaporama.currentTime = i * 1000 / fps;
         diaporama.renderNow();
 
+        // FIXME: there seems to be a bug of channel priority. transition sometimes are not captured.
+
         var child = container.children[0];
         ctx.fillRect(0, 0, width, height);
         if (child) {
@@ -96,5 +97,9 @@ DiaporamaRecorder.prototype = {
     });
   }
 };
+
+for (var k in common.defaults) {
+  DiaporamaRecorder.prototype[k] = common.defaults[k];
+}
 
 module.exports = DiaporamaRecorder;

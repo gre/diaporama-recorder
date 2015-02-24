@@ -15,6 +15,13 @@ function values (obj) {
   return v;
 }
 
+var frameFormats = {
+  "image/jpg": { ext: "jpg" },
+  "image/png": { ext: "png" }
+};
+
+frameFormats["image/jpeg"] = frameFormats["image/jpg"];
+
 function bind (io, logger) {
   if (!logger) {
     logger = {
@@ -30,6 +37,8 @@ function bind (io, logger) {
     socket.once(E.client.begin, function videoBegin (nbFrames, options) {
       logger.info("Receiving video...");
       var video = new Video(options, logger);
+
+      var frameFormat = frameFormats[options.frameFormat];
 
       var frames = {};
 
@@ -67,14 +76,23 @@ function bind (io, logger) {
           return terminateFailure(new Error("reach an already existing frameId="+frameId));
         }
         var split = dataUrl.split(",");
-        if (split[0] !== "data:image/jpeg;base64") {
-          return terminateFailure(new Error("Only JPEG is supported."));
+
+        var mime;
+        try {
+          mime = split[0].substring(5).split(";")[0];
+        }
+        catch (e) {
+          return terminateFailure(new Error("invalid data64 format."));
+        }
+
+        if (!(mime in frameFormats && frameFormats[mime].ext === frameFormat.ext)) {
+          return terminateFailure(new Error("base64 format mimetype '"+mime+"' doesn't match the expected frameFormat '"+options.frameFormat+"'"));
         }
         else {
           var buffer = new Buffer(split[1], 'base64');
 
           frames[frameId] = tmpDir.then(function (path) {
-            var stream = fs.createWriteStream(path+"/"+frameId+".jpg");
+            var stream = fs.createWriteStream(path+"/"+frameId+"."+frameFormat.ext);
             stream.end(buffer);
             socket.emit(E.server.received, frameId);
           }).fail(terminateFailure);
@@ -95,7 +113,7 @@ function bind (io, logger) {
             .thenResolve(tmpDir)
             .then(function (path) {
               logger.debug("Video processing...");
-              video.feed(path+"/%d.jpg")
+              video.feed(path+"/%d."+frameFormat.ext)
               .on('start', function (cmd) {
                 logger.debug(cmd);
                 socket.emit(E.server.processing);
@@ -133,6 +151,16 @@ function bind (io, logger) {
       socket.once(E.client.end, clientEnd);
 
       tmpDir.fail(terminateFailure);
+      if (!frameFormat) {
+        terminateFailure(new Error("Frame Format not supported: "+options.frameFormat));
+      }
+
+      Video.formatsPromise.then(function (formats) {
+        if ( !(video.videoFormat in formats) ) {
+          terminateFailure(new Error("requested format is not supported."));
+        }
+      });
+
 
     });
 

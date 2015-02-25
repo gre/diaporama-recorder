@@ -13,7 +13,8 @@ function bind (network) {
     generateVideo: function generateVideo (diaporama, options) {
       if (!options) options = {};
 
-      var subject = new Rx.Subject();
+      var termination = new Rx.Subject();
+
       var recorder = DiaporamaRecorder(diaporama, options);
 
       var videoOptions = {};
@@ -26,38 +27,49 @@ function bind (network) {
           videoOptions[k] = options[k];
       });
 
-      network.emit(E.client.begin, recorder.nbFrames, videoOptions);
-
       network.once(E.server.error, function (msg) {
         recorder.abort(new Error(msg));
       });
 
-      network.on(E.server.processing, function (frameId) {
-        subject.onNext({ type: "server-processing" });
-      });
-      network.on(E.server.received, function (frameId) {
-        subject.onNext({ type: "server-received", i: frameId, percent: (frameId+1) / recorder.nbFrames });
-      });
-      network.on(E.server.progress, function (frames) {
-        subject.onNext({ type: "server-progress", frames: frames, percent: frames / recorder.nbFrames });
-      });
-      network.once(E.server.error, subject.onError.bind(subject));
-      network.once(E.server.success, subject.onCompleted.bind(subject));
+      var processing = Rx.Observable.fromEvent(network, E.server.processing)
+        .first()
+        .takeUntil(termination);
+
+      var received = Rx.Observable.fromEvent(network, E.server.received)
+        .takeUntil(processing);
+
+      var progress = Rx.Observable.fromEvent(network, E.server.progress)
+        .takeUntil(termination);
+
+      var frameComputations = new Rx.Subject();
+
+      network.once(E.server.error, termination.onError.bind(termination));
+      network.once(E.server.success, termination.onCompleted.bind(termination));
+
+      network.emit(E.client.begin, recorder.nbFrames, videoOptions);
 
       recorder
-        .record()
+        .record(received)
         .subscribe(function (o) {
           network.emit(E.client.frame, o.id, o.data);
-          subject.onNext({ type: "frame-computed", i: o.id, percent: (o.id+1) / recorder.nbFrames });
+          frameComputations.onNext(o.id);
           // (o.id / recorder.nbFrames);
         }, function (error) {
-          network.emit(E.client.abort, { message: error.message });
-          subject.onError(error);
+          console.log(error);
+          network.emit(E.client.abort, error.message);
+          termination.onError(error);
         }, function () {
           network.emit(E.client.end);
         });
 
-      return subject.asObservable();
+      return {
+        nbFrames: recorder.nbFrames,
+        frameComputations: frameComputations,
+        termination: termination,
+        received: received,
+        progress: progress
+
+      };
     }
 
   };

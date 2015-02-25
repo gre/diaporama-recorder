@@ -2,12 +2,20 @@ var Diaporama = require("diaporama");
 var Rx = require("rx");
 var common = require("./common");
 
+function identity (x) { return x; }
+
 function extractFromCanvas (canvas, cb, type, quality) {
   // Currently using toDataURL. in the future, might be replaced with toBlob
   if (!canvas.toDataURL) {
     throw new Error("Canvas#toDataURL not available.");
   }
-  cb(canvas.toDataURL(type, quality));
+  var dataURL = canvas.toDataURL(type, quality);
+  /*
+  var data = dataURL.substr(dataURL.indexOf('base64') + 7);
+  var buffer = new Buffer(data, 'base64');
+  cb(buffer);
+  */
+  cb(dataURL);
 }
 
 function DiaporamaRecorder (json, options) {
@@ -46,7 +54,9 @@ DiaporamaRecorder.prototype = {
   },
 
   // Methods
-  record: function () {
+  record: function (serverReceives) {
+    var computeAhead = 10;
+
     var container = this.container;
     var diaporama = this.diaporama;
     var fps = this.fps;
@@ -86,7 +96,8 @@ DiaporamaRecorder.prototype = {
 
     var frameStream = this.load.concatMap(function () {
       return Rx.Observable
-        .range(0, frames, Rx.Scheduler.timeout)
+        .range(0, frames)
+        .zip(Rx.Observable.range(0, computeAhead).concat(serverReceives), identity)
         .concatMap(captureFrame)
         .takeUntil(abortion);
     });

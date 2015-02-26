@@ -12,14 +12,16 @@ module.exports = {
       begin: eventsPrefix+"b",
       frame: eventsPrefix+"f",
       abort: eventsPrefix+"a",
-      end: eventsPrefix+"e"
+      end: eventsPrefix+"e",
+      getFormats: eventsPrefix+"gf"
     },
     server: {
       error: eventsPrefix+"e",
       success: eventsPrefix+"s",
       received: eventsPrefix+"r",
       processing: eventsPrefix+"c",
-      progress: eventsPrefix+"p"
+      progress: eventsPrefix+"p",
+      formats: eventsPrefix+"sf"
     }
   }
 };

@@ -10,12 +10,12 @@ function extractFromCanvas (canvas, cb, type, quality) {
     throw new Error("Canvas#toDataURL not available.");
   }
   var dataURL = canvas.toDataURL(type, quality);
+  cb(dataURL);
   /*
   var data = dataURL.substr(dataURL.indexOf('base64') + 7);
   var buffer = new Buffer(data, 'base64');
   cb(buffer);
   */
-  cb(dataURL);
 }
 
 function DiaporamaRecorder (json, options) {

@@ -33,6 +33,14 @@ function bind (io, logger) {
   }
   io.sockets.on('connection', function (socket) {
 
+    socket.on(E.client.getFormats, function () {
+      Video.formatsPromise
+        .fail(function () { return []; })
+        .then(function (formats) {
+          socket.emit(E.server.formats, formats);
+        });
+    });
+
     // Handle Video Submission
     socket.once(E.client.begin, function videoBegin (nbFrames, options) {
       logger.info("Receiving video...");

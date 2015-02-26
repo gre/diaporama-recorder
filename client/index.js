@@ -10,6 +10,11 @@ function bind (network) {
 
   return {
 
+    getFormats: function () {
+      network.emit(E.client.getFormats);
+      return Rx.Observable.fromEvent(network, E.server.formats).first();
+    },
+
     generateVideo: function generateVideo (diaporama, options) {
       if (!options) options = {};
 
